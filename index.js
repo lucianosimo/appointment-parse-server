@@ -46,14 +46,23 @@ var api = new ParseServer({
 var cors = require('cors');
 var Mailgun = require('mailgun-js');
 var app = express();
+var bodyParser = require('body-parser')
 
 var api_key = process.env.MAILGUN_API_KEY;
 var domain = process.env.MAILGUN_DOMAIN;
 var from_who = process.env.MAILGUN_EMAIL_FROM;
-var to_who = process.env.MAILGUN_EMAIL_TO;
 
+//Enable cors
 app.use(cors());
+
+//Set JADE
 app.set('view engine', 'jade');
+
+//Set body-parser
+app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+})); 
 
 // Serve static assets from the /public folder
 app.use('/public', express.static(path.join(__dirname, '/public')));
@@ -69,23 +78,40 @@ app.get('/', function(req, res) {
 
 // Send a message to the specified email address when you navigate to /submit/someaddr@email.com
 // The index redirects here
-app.get('/testemail', function(req,res) {
+app.post('/confirmationEmail', function(req,res) {
 
     //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
     var mailgun = new Mailgun({apiKey: api_key, domain: domain});
 
     var data = {
-    //Specify email data
+      //Specify email data
       from: from_who,
-    //The email to contact
-      to: to_who,
-    //Subject and text data  
-      subject: 'Hello from Mailgun',
-      html: 'Hello, This is not a plain-text email, I wanted to test some spicy Mailgun sauce in NodeJS!'
+      //The email to contact
+      to: req.body.to,
+      bcc: req.body.bcc,
+      //Subject and text data  
+      subject: req.body.mailSubject,
+      html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
+            "<hr style='display:block;height:2px;background-color:#cb3630;margin-bottom:25px;border:none'>" +
+            "<div style='text-align:center;font-size:28px;'><strong>" + req.body.helloLabel + " " + req.body.clientName + "</strong></div>" +
+            "<div style='margin-bottom:25px;text-align:center;font-size:28px;'><strong>" + req.body.confirmationLabel + "</strong></div>" +
+            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.codeLabel + "</strong>" + req.body.reservationCode + "</div>" +
+            "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.paymentMethodLabel + "</strong>" + req.body.paymentMethodMailLabel + "</div>" +
+            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.dateLabel + "</strong>" + req.body.normalizedTime + "</div>" +
+            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.storeLabel + "</strong>" + req.body.address + "</div>" +
+            "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.phoneLabel + "</strong>" + req.body.storePhone + "</div>" +
+            "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.paymentOnSite + "</strong></div>" +
+            "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.footerLabel + "</strong></div>" +
+            "<hr style='display:block;height:2px;background-color:#cb3630;margin-top:25px;border:none'>"
     }
 
     //Invokes the method to send emails given the above data with the helper library
     mailgun.messages().send(data, function (err, body) {
+        if (err) {
+
+        } else {
+          res.status(200).send("Mail sent successfully");
+        }
         //If there is an error, render the error page
         /*if (err) {
             console.log("got an error: ", err);
