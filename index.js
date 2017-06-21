@@ -94,7 +94,7 @@ app.get('/testemail', function(req,res) {
         else {
             //Here "submitted.jade" is the view file for this landing page 
             //We pass the variable "email" from the url parameter in an object rendered by Jade
-            res.render('submitted', { email : req.params.mail });
+            res.render('submitted', { email : to_who });
             console.log(body);
         }
     });
