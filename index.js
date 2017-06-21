@@ -53,7 +53,14 @@ var domain = process.env.MAILGUN_DOMAIN;
 var from_who = process.env.MAILGUN_EMAIL_FROM;
 
 //Enable cors
-app.use(cors());
+//app.use(cors());
+app.use(
+  cors(
+    { credentials: true, 
+      origin: 'localhost:9000';
+    }
+  )
+);
 
 //Set JADE
 app.set('view engine', 'jade');
@@ -71,11 +78,11 @@ app.use('/public', express.static(path.join(__dirname, '/public')));
 var mountPath = process.env.PARSE_MOUNT || '/parse';
 app.use(mountPath, api);
 
-app.use(function(req, res, next) {
+/*app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:9000");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
-});
+});*/
 
 // Parse Server plays nicely with the rest of your web routes
 app.get('/', function(req, res) {
