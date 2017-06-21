@@ -57,7 +57,7 @@ var from_who = process.env.MAILGUN_EMAIL_FROM;
 app.use(
   cors(
     { credentials: true, 
-      origin: 'http://localhost:9000';
+      origin: 'http://localhost:9000'
     }
   )
 );
