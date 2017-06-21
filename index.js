@@ -57,6 +57,7 @@ app.use(
   cors(
     { credentials: true, 
       origin: ['http://localhost:9000', 'https://www.oneclickstore.com']
+      //origin: 'http://localhost:9000'
     }
   )
 );
@@ -91,8 +92,8 @@ app.post('/confirmationEmail', function(req,res) {
     var fromLabel = req.body.fromLabel + ' <' + from_who + '>';
 
     var data = {
-      from: from_who,
-      to: fromLabel,
+      from: fromLabel,
+      to: req.body.to,
       bcc: req.body.bcc,
       subject: req.body.subject,
       html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
