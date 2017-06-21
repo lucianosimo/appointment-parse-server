@@ -90,7 +90,7 @@ app.post('/confirmationEmail', function(req,res) {
     var mailgun = new Mailgun({apiKey: api_key, domain: domain});
 
     var data = {
-      from: req.body.fromLabel + " " + from_who,
+      from: from_who,
       to: req.body.to,
       bcc: req.body.bcc,
       subject: req.body.subject,
