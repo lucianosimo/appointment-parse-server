@@ -44,7 +44,13 @@ var api = new ParseServer({
 // javascriptKey, restAPIKey, dotNetKey, clientKey
 
 var cors = require('cors');
+var Mailgun = require('mailgun-js');
 var app = express();
+
+var api_key = process.env.MAILGUN_API_KEY;
+var domain = process.env.MAILGUN_DOMAIN;
+var from_who = process.env.MAILGUN_EMAIL_FROM;
+var to_who = process.env.MAILGUN_EMAIL_TO;
 
 app.use(cors());
 
@@ -58,6 +64,41 @@ app.use(mountPath, api);
 // Parse Server plays nicely with the rest of your web routes
 app.get('/', function(req, res) {
   res.status(200).send(parseServerHomeBody);
+});
+
+// Send a message to the specified email address when you navigate to /submit/someaddr@email.com
+// The index redirects here
+app.get('/testemail', function(req,res) {
+
+    //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
+    var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+
+    var data = {
+    //Specify email data
+      from: from_who,
+    //The email to contact
+      to: to_who,
+    //Subject and text data  
+      subject: 'Hello from Mailgun',
+      html: 'Hello, This is not a plain-text email, I wanted to test some spicy Mailgun sauce in NodeJS!'
+    }
+
+    //Invokes the method to send emails given the above data with the helper library
+    mailgun.messages().send(data, function (err, body) {
+        //If there is an error, render the error page
+        if (err) {
+            res.render('error', { error : err});
+            console.log("got an error: ", err);
+        }
+        //Else we can greet    and leave
+        else {
+            //Here "submitted.jade" is the view file for this landing page 
+            //We pass the variable "email" from the url parameter in an object rendered by Jade
+            res.render('submitted', { email : req.params.mail });
+            console.log(body);
+        }
+    });
+
 });
 
 var port = process.env.PORT || 1337;
