@@ -13,7 +13,8 @@
     "kerberos": "~0.0.x",
     "newrelic": "^1.28.1",
     "parse": "~1.8.0",
-    "parse-server": "*"
+    "parse-server": "*",
+    "cors": "^2.8.3"
   },
   "scripts": {
     "start": "node index.js"
