@@ -56,8 +56,7 @@ var from_who = process.env.MAILGUN_EMAIL_FROM;
 app.use(
   cors(
     { credentials: true, 
-      //origin: ['http://localhost:9000', 'https://www.oneclickstore.com']
-      origin: 'http://localhost:9000'
+      origin: ['http://localhost:9000', 'https://www.oneclickstore.com']
     }
   )
 );
@@ -89,10 +88,11 @@ app.post('/confirmationEmail', function(req,res) {
 
     //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
     var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+    var fromLabel = req.body.fromLabel + ' <' + from_who + '>';
 
     var data = {
       from: from_who,
-      to: req.body.to,
+      to: fromLabel,
       bcc: req.body.bcc,
       subject: req.body.subject,
       html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
