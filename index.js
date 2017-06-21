@@ -68,7 +68,7 @@ app.get('/', function(req, res) {
 
 // Send a message to the specified email address when you navigate to /submit/someaddr@email.com
 // The index redirects here
-app.get('/testemail', function(req,res) {
+app.get('/testemail/:mail', function(req,res) {
 
     //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
     var mailgun = new Mailgun({apiKey: api_key, domain: domain});
@@ -83,8 +83,13 @@ app.get('/testemail', function(req,res) {
       html: 'Hello, This is not a plain-text email, I wanted to test some spicy Mailgun sauce in NodeJS!'
     }
 
+    console.log(data);
+
     //Invokes the method to send emails given the above data with the helper library
     mailgun.messages().send(data, function (err, body) {
+        console.log(err);
+        console.log(body);
+
         //If there is an error, render the error page
         if (err) {
             res.render('error', { error : err});
