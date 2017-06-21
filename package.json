@@ -15,7 +15,8 @@
     "parse": "~1.8.0",
     "parse-server": "*",
     "cors": "^2.8.3",
-    "mailgun-js": "^0.11.2"
+    "mailgun-js": "^0.11.2",
+    "jade": "^1.11.0"
   },
   "scripts": {
     "start": "node index.js"
