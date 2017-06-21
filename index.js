@@ -59,7 +59,7 @@ app.use(cors());
 app.set('view engine', 'jade');
 
 //Set body-parser
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use( bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
   extended: true
 })); 
@@ -70,6 +70,12 @@ app.use('/public', express.static(path.join(__dirname, '/public')));
 // Serve the Parse API on the /parse URL prefix
 var mountPath = process.env.PARSE_MOUNT || '/parse';
 app.use(mountPath, api);
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "http://localhost:9000");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 // Parse Server plays nicely with the rest of your web routes
 app.get('/', function(req, res) {
