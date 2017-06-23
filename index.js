@@ -137,7 +137,7 @@ app.post('/surveyEmail', function(req,res) {
       html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
             "<hr style='display:block;height:2px;background-color:#cb3630;margin-bottom:25px;border:none'>" +
             "<div style='text-align:center;font-size:20px;'><strong>" + req.body.mailBody + "</strong></div>" +
-            "<div style='text-align:center;font-size:20px;'><a href=" + req.body.surveyLink + "></div>" +
+            "<div style='text-align:center;font-size:20px;'><a href='" + req.body.surveyLink + "'>TEST</a></div>" +
             "<hr style='display:block;height:2px;background-color:#cb3630;margin-top:25px;border:none'>"
     }
 
