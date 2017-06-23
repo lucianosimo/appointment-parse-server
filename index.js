@@ -128,7 +128,7 @@ app.post('/surveyEmail', function(req,res) {
     //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
     var mailgun = new Mailgun({apiKey: api_key, domain: domain});
     var fromLabel = req.body.fromLabel + ' <' + from_who + '>';
-    var surveyLink = process.env.SURVEY_LINK + req.body.reservationId + "/" + req.body.instructor;
+    var surveyLink = req.body.surveyLink + "/" + req.body.reservationId + "/" + req.body.instructor;
 
     var data = {
       from: fromLabel,
