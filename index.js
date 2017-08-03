@@ -2,6 +2,13 @@
 // compatible API routes.
 require('newrelic');
 
+var Parse = require('parse/node');
+Parse.initialize(process.env.APP_ID, null, process.env.MASTER_KEY);
+Parse.serverURL = process.env.SERVER_URL || 'http://localhost:1337/parse';
+
+var MP = require ("mercadopago");
+var mp = new MP (process.env.MERCADOPAGO_CLIENT_ID, process.env.MERCADOPAGO_CLIENT_SECRET);
+
 var express = require('express');
 var ParseServer = require('parse-server').ParseServer;
 var path = require('path');
@@ -86,41 +93,7 @@ app.get('/', function(req, res) {
 // Send a message to the specified email address when you navigate to /submit/someaddr@email.com
 // The index redirects here
 app.post('/confirmationEmail', function(req,res) {
-
-    //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
-    var mailgun = new Mailgun({apiKey: api_key, domain: domain});
-    var fromLabel = req.body.fromLabel + ' <' + from_who + '>';
-
-    var data = {
-      from: fromLabel,
-      to: req.body.to,
-      bcc: req.body.bcc,
-      subject: req.body.subject,
-      html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
-            "<hr style='display:block;height:2px;background-color:#cb3630;margin-bottom:25px;border:none'>" +
-            "<div style='text-align:center;font-size:28px;'><strong>" + req.body.helloLabel + " " + req.body.clientName + "</strong></div>" +
-            "<div style='margin-bottom:25px;text-align:center;font-size:28px;'><strong>" + req.body.confirmationLabel + "</strong></div>" +
-            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.codeLabel + "</strong>" + req.body.reservationCode + "</div>" +
-            "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.paymentMethodLabel + "</strong>" + req.body.paymentMethodMailLabel + "</div>" +
-            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.clientPhoneLabel + "</strong>" + req.body.clientPhone + "</div>" +
-            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.fromDateLabel + "</strong>" + req.body.fromNormalizedTime + "</div>" +
-            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.toDateLabel + "</strong>" + req.body.toNormalizedTime + "</div>" +
-            "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.storeLabel + "</strong>" + req.body.storeAddress + "</div>" +
-            "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.phoneLabel + "</strong>" + req.body.storePhone + "</div>" +
-            "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.paymentOnSite + "</strong></div>" +
-            "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.footerLabel + "</strong></div>" +
-            "<hr style='display:block;height:2px;background-color:#cb3630;margin-top:25px;border:none'>"
-    }
-
-    //Invokes the method to send emails given the above data with the helper library
-    mailgun.messages().send(data, function (err, body) {
-        if (err) {
-
-        } else {
-          res.status(200).send("Mail sent successfully");
-        }
-    });
-
+    sendConfirmationEmail(req, res);
 });
 
 app.post('/surveyEmail', function(req,res) {
@@ -152,6 +125,30 @@ app.post('/surveyEmail', function(req,res) {
 
 });
 
+app.post('/getPaymentConfirmation', function(req,res) {
+
+  var externalReferenceValue = "appointment" + req.body.reservationId;
+  var filters = {
+    "external_reference": externalReferenceValue
+  };
+
+  mp.searchPayment(filters)
+    .then (
+      function success (data) {
+        console.log(JSON.stringify (data, null, 4));
+        if (data.response.results.length !== 0 && data.response.results[0].collection.status === "approved") {
+            setReservationUnavailable(req.body.reservationId).then(function() {
+            sendConfirmationEmail(req, res);  
+          });
+        }
+        //res.status(200).send("Payment approved");
+      },
+      function error (err) {
+        console.log (err);
+      });
+
+});
+
 var port = process.env.PORT || 1337;
 var httpServer = require('http').createServer(app);
 httpServer.listen(port, function() {
@@ -160,3 +157,66 @@ httpServer.listen(port, function() {
 
 // This will enable the Live Query real-time server
 ParseServer.createLiveQueryServer(httpServer);
+
+var setReservationUnavailable = function(reservationId) {
+  var Reservation = Parse.Object.extend("Reservation");
+  var Store = Parse.Object.extend("Store");
+  var reservation = new Reservation();
+  var reservationQuery = new Parse.Query(Reservation);
+  var storeQuery = new Parse.Query(Store);
+
+  reservationQuery.equalTo("objectId", reservationId);
+  reservationQuery.include("reservationStore");
+
+  return reservationQuery.find({useMasterKey:true}).then(function(selectedReservation) {
+    storeQuery.equalTo("objectId", selectedReservation[0].attributes.reservationStore.id);
+
+    return storeQuery.find({useMasterKey:true}).then(function(selectedStore) {
+      selectedReservation[0].set("available", false);
+      selectedReservation[0].set("reservationStore", selectedStore[0]);
+
+      return selectedReservation[0].save({useMasterKey:true}).then(function(updateReservation) {
+        return updateReservation;
+      }, function(error) {
+        
+      });
+
+    });      
+  });
+}
+
+var sendConfirmationEmail = function(req, res) {
+  //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
+  var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+  var fromLabel = req.body.fromLabel + ' <' + from_who + '>';
+
+  var data = {
+    from: fromLabel,
+    to: req.body.to,
+    bcc: req.body.bcc,
+    subject: req.body.subject,
+    html: "<div style='margin-bottom:15px'><img src='https://www.oneclickstore.com/oneonone/mail/mail-logo.png'></div>" +
+          "<hr style='display:block;height:2px;background-color:#cb3630;margin-bottom:25px;border:none'>" +
+          "<div style='text-align:center;font-size:28px;'><strong>" + req.body.helloLabel + " " + req.body.clientName + "</strong></div>" +
+          "<div style='margin-bottom:25px;text-align:center;font-size:28px;'><strong>" + req.body.confirmationLabel + "</strong></div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.codeLabel + "</strong>" + req.body.reservationCode + "</div>" +
+          "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.paymentMethodLabel + "</strong>" + req.body.paymentMethodMailLabel + "</div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.clientPhoneLabel + "</strong>" + req.body.clientPhone + "</div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.fromDateLabel + "</strong>" + req.body.fromNormalizedTime + "</div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.toDateLabel + "</strong>" + req.body.toNormalizedTime + "</div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.storeLabel + "</strong>" + req.body.storeAddress + "</div>" +
+          "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.phoneLabel + "</strong>" + req.body.storePhone + "</div>" +
+          "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.paymentOnSite + "</strong></div>" +
+          "<div style='margin-top:10px;text-align:center;font-size:16px;'><strong>" + req.body.footerLabel + "</strong></div>" +
+          "<hr style='display:block;height:2px;background-color:#cb3630;margin-top:25px;border:none'>"
+  }
+
+  //Invokes the method to send emails given the above data with the helper library
+  mailgun.messages().send(data, function (err, body) {
+      if (err) {
+
+      } else {
+        res.status(200).send("Mail sent successfully");
+      }
+  });
+}
