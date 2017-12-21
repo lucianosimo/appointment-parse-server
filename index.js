@@ -148,7 +148,7 @@ app.post('/getPaymentConfirmation', function(req,res) {
         console.log (err);
       });
 
-  res.status(200).send("Test");
+  res.status(200).send("OK");
 });
 
 var port = process.env.PORT || 1337;
