@@ -63,8 +63,8 @@ var from_who = process.env.MAILGUN_EMAIL_FROM;
 app.use(
   cors(
     { credentials: true, 
-      //origin: ['http://localhost:9000', 'https://www.oneclickstore.com', 'http://www.oneclick.com.ar']
-      origin: true
+      origin: ['http://localhost:9000', 'https://www.oneclickstore.com', 'http://www.oneclick.com.ar'],
+      allowedHeaders: 'Origin,Content-Type,Authorization'
       //origin: 'http://localhost:9000'
     }
   )
