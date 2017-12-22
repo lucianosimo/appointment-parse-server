@@ -136,12 +136,23 @@ app.post('/getPaymentConfirmation', function(req,res) {
   mp.searchPayment(filters)
     .then (
       function success (data) {
+
         console.log(JSON.stringify (data, null, 4));
-        if (data.response.results.length !== 0 && data.response.results[0].collection.status === "approved") {
+        
+        if (data.response.results.length !== 0) {
+          for (var i = 0; i < data.response.results.length; i++) {
+            if (data.response.results[0].collection.status === "approved") {
+                setReservationUnavailable(req.body.reservationId).then(function() {
+                sendConfirmationEmail(req, res);  
+              }); 
+            }
+          }
+        }
+        /*if (data.response.results.length !== 0 && data.response.results[0].collection.status === "approved") {
             setReservationUnavailable(req.body.reservationId).then(function() {
             sendConfirmationEmail(req, res);  
           });
-        }
+        }*/
         //res.status(200).send("Payment approved");
       },
       function error (err) {
