@@ -213,6 +213,7 @@ var sendConfirmationEmail = function(req, res) {
           "<div style='text-align:center;font-size:28px;'><strong>" + req.body.helloLabel + " " + req.body.clientName + "</strong></div>" +
           "<div style='margin-bottom:25px;text-align:center;font-size:28px;'><strong>" + req.body.confirmationLabel + "</strong></div>" +
           "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.codeLabel + "</strong>" + req.body.reservationCode + "</div>" +
+          "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.topicLabel + "</strong>" + req.body.courseName + "</div>" +
           "<div style='margin-bottom:25px;text-align:center;font-size:26px;color:#555555'><strong>" + req.body.paymentMethodLabel + "</strong>" + req.body.paymentMethodMailLabel + "</div>" +
           "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.clientPhoneLabel + "</strong>" + req.body.clientPhone + "</div>" +
           "<div style='text-align:center;font-size:26px;color:#555555'><strong>" + req.body.fromDateLabel + "</strong>" + req.body.fromNormalizedTime + "</div>" +
